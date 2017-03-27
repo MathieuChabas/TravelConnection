@@ -1,7 +1,9 @@
 <footer>
-<div class="row">
+<div class="row social-links">
     <div class="col-sm-2 col-sm-offset-2">
-        Social networkds
+        <a href="https://www.facebook.com/" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+        <a href="https://twitter.com" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+        <a href="https://www.linkedin.com/" target="_blank"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
     </div>
     <div class="col-sm-2 col-sm-offset-1">
         <span>anugupta8619@gmail.com</span><br>

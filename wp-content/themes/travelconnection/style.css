@@ -1,83 +1,293 @@
 body {
-    font-size: 16px !important;
+    font-size: 14px !important;
 }
 
+.subtitle {
+    font-size: 18px;
+    font-style: italic;
+}
+.row {
+    margin: 0!important;
+}
+/* NAVBAR */
 .navbar.navbar-default {
     background-color: #ffffff;
     border: none;
+    margin: 0;
+}
+
+.navbar.navbar-default .navbar-header {
+    float: none;
+    margin-bottom: 30px;
     margin-top: 30px;
-    height: 55px;
-    padding-left: 50px;
-    padding-right: 50px;
+    margin-left: 10%;
 }
 
-ul.navbar-nav.navbar-right {
-    margin-top: 25px;
+.navbar.navbar-default a.navbar-brand {
+    padding-left: 30px;
 }
 
-.navbar-brand #title {
+.navbar-default .navbar-collapse {
+    background-color: lightgrey;
+}
+.navbar-default .navbar-collapse ul#menu-primary {
+    margin-left: 10%;
+}
+.navbar-default .navbar-collapse ul#menu-primary li a {
+    padding: 10px 15px;
+}
+
+.navbar-default .navbar-brand .title {
     text-transform: uppercase;
     font-size: 25px;
+    color: #2D2D2D;
 }
 
-.navbar-brand #subtitle {
+.navbar-brand .subtitle {
     text-transform: uppercase;
     font-style: italic;
     font-size: 15px;
 }
-
-#first-block {
-    width: 100%;
-    height: 500px;
-    padding: 0;
-    margin: 0;
+.navbar-default .social-links {
+    float: right;
+    margin-right: 10%;
+}
+.navbar-default .social-links a {
+    padding: 10px 10px;
+    display: block;
+    float: left;
+    color: #2D2D2D;
 }
 
-#first-block img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#second-block {
+/* GENERIC STYLE */
+.purple-block {
     width: 100%;
     height: auto;
     margin: 0;
     background-color: #435494;
-    padding-top: 50px;
-    padding-bottom: 50px;
+    padding: 50px 0px;
     color: #ffffff;
     text-align: center;
 }
+.purple-block .header {
+    font-size: 36px;
+}
+.purple-block .subheader {
+    font-size: 18px;
+    font-style: italic;
+}
 
-#second-block .first-subtitle {
+.button-orange {
+    display: inline-block;
+    margin: 15px 0;
+    background-color: rgba(246, 81, 0, 1);
+    padding: 11px 15px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.button-orange:hover {
+    opacity: 0.8;
+    text-decoration: none;
+    color: white;
+}
+.button-orange:active, .button-orange:focus {
+    text-decoration: none;
+    color: white;
+}
+/* FOOTER */
+footer {
+    padding: 50px;
+    height: 120px;
+    background-color: rgba(223, 223, 223, 1);
+}
+
+footer .social-links a {
+    color: #777;
+    margin-right: 10px;
+}
+
+/* HOME PAGE*/
+.page-home .first-block {
+    width: 100%;
+    height: 600px;
+    padding: 0;
+    margin: 0;
+}
+
+.page-home .first-block img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+.page-home .purple-block .content {
+    margin: auto;
+    width: 67%
+}
+.page-home .purple-block .content.offers {
+    width: 100%;
+}
+.page-home .purple-block .first-subtitle {
     font-size: 80px;
     line-height: 99px;
     letter-spacing: 2px;
 }
 
-#second-block .second-subtitle {
+.page-home .purple-block .second-subtitle {
     font-size: 25px;
 }
 
-#second-block .third-subtitle {
+.page-home .purple-block .third-subtitle {
     font-size: 16px;
 }
 
-#second-block p {
+.page-home .purple-block p {
     margin-bottom: 25px;
 }
 
-#third-block {
+.page-home .third-block {
     padding: 50px;
 }
 
-#third-block .left-block {
+.page-home .third-block .left-block {
     margin-top: 50px;
 }
 
-footer {
-    height: 120px;
-    padding-top: 50px;
-    background-color: rgba(223, 223, 223, 1);
+.page-home .third-block .thumbnail {
+    width: 95%;
+    height: 220px;
+}
+
+.page-home .third-block .thumbnail img {
+    width: 100%;
+    height: 100%;
+}
+
+.page-home .third-block .left-block .subtext {
+    width: 80%;
+    font-size: 16px;
+}
+
+.page-home .third-block .left-block h2 {
+    font-size: 35px;
+    width: 80%;
+    margin-bottom: 30px;
+    line-height: 50px;
+}
+
+/* BLOCKS WITH ALTERNATE IMG */
+.content-block-alternate-image {
+    margin-top: 50px;
+    background-color: white;
+    height: 450px;
+    padding: 0 !important;
+}
+.content-block-alternate-image img {
+    width: 100%;
+}
+.content-block-alternate-image:nth-child(odd) img {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.content-block-alternate-image:nth-child(even) img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+.content-block-alternate-image:nth-child(odd) .content-description {
+    position: absolute;
+    bottom: 50px;
+    left: 20px;
+}
+.content-block-alternate-image:nth-child(even) .content-description {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+}
+.content-block-alternate-image .content-description {
+    color: black;
+}
+.content-block-alternate-image .content-description .header {
+    font-size: 18px;
+    margin: 30px 0px;
+}
+.content-block-alternate-image .content-description .content {
+    font-size: 16px;
+    margin: 0 30px;
+}
+
+/* BLOCKS WITH IMG + CONTENT */
+.content-block-image {
+    margin-top: 50px;
+    height: 100%;
+    min-height: 450px;
+    padding: 0 !important;
+}
+.content-block-image img {
+    width: 100%;
+    height: auto;
+}
+.content-block-image .content-description .header {
+    font-size: 18px;
+    margin: 30px 0px;
+}
+.content-block-image .content-description .content {
+    font-size: 16px;
+    margin: 0 30px;
+}
+
+/* BLOCK WITH IMAGE */
+.image-full-width {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    padding: 0;
+    margin: 0;
+}
+.image-full-width img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+.image-full-width.dark img {
+    filter: brightness(75%);
+}
+.image-full-width .center-legend {
+    position: absolute;
+    left: 45%;
+    top: 45%;
+    color: white;
+    font-size: 45px;
+}
+
+/* BLOCK CONTENT + IMAGE ALIGN */
+.content-2-blocks img {
+    width: 100%;
+    height: auto;
+}
+.content-2-blocks .block {
+    margin: 0;
+    padding: 0;
+}
+.content-2-blocks .content {
+    display: block;
+    margin-left: 30%;
+    margin-top: 10%;
+}
+.content-2-blocks .content .header {
+    font-size: 35px;
+}
+.content-2-blocks .content .subtext {
+    font-size: 18px;
+}
+
+/* IMAGE GALLERY */
+.image-gallery img {
+    height: 220px;
+    width: 100%;
+    object-fit: cover;
 }

@@ -6,7 +6,7 @@ class TravelConnectionTheme {
         // Register action/filter callbacks
         add_action('after_setup_theme', array($this, 'init'));
         add_filter('excerpt_length', array($this, 'custom_excerpt_length'));
-
+        add_filter( 'body_class', array($this, 'add_slug_body_class'));
     }
 
     /**
@@ -21,7 +21,19 @@ class TravelConnectionTheme {
         );
         wp_enqueue_style('style', get_template_directory_uri() . '/style.css', array(), null );
         wp_enqueue_style('boostrap', get_template_directory_uri() . '/css/bootstrap.min.css', array(), null );
+        wp_enqueue_style('font-awesome', get_template_directory_uri() . '/css/font-awesome.min.css', array(), null );
+
         wp_enqueue_script('bootstrap', get_template_directory_uri() . '/js/bootstrap.min.js', array('jquery'), null , true );
+    }
+
+    //Page Slug Body Class
+
+    function add_slug_body_class( $classes ) {
+        global $post;
+        if ( isset( $post ) ) {
+        $classes[] = $post->post_type . '-' . $post->post_name;
+        }
+        return $classes;
     }
 
     /**
