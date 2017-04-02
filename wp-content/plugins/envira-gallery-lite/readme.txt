@@ -186,6 +186,11 @@ Also, I'm an <a href="https://thomasgriffin.io" rel="me" title="WordPress Develo
 
 == Changelog ==
 
+= 1.6.0 =
+
+* Added: Lazy loading 
+* Fix: Minor bug fixes
+
 = 1.5.6.4 =
 
 * Fix: CSS issues TwentySeventeen  

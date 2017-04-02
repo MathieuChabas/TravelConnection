@@ -91,6 +91,7 @@ class Envira_Gallery_Shortcode {
         // Register main gallery style.
         wp_register_style( $this->base->plugin_slug . '-style', plugins_url( 'assets/css/envira.css', $this->base->file ), array(), $this->base->version );
         wp_register_style( $this->base->plugin_slug . '-fancybox', plugins_url( 'assets/css/fancybox.css', $this->base->file ), array(), $this->base->version );
+        wp_register_style( $this->base->plugin_slug . '-lazyload', plugins_url( 'assets/css/responsivelyLazy.css', $this->base->file ), array(), $this->base->version );
 
         // if ( $this->get_config( 'columns', $data ) == 0 ) :
         wp_register_style( $this->base->plugin_slug . '-jgallery', plugins_url( 'assets/css/justifiedGallery.css', $this->base->file ), array(), $this->base->version );
@@ -172,11 +173,20 @@ class Envira_Gallery_Shortcode {
             return $this->do_feed_output( $data );
         }
 
+        $lazy_loading_delay = isset( $this->gallery_data['config']['lazy_loading_delay'] ) ? intval($this->gallery_data['config']['lazy_loading_delay']) : 500;
+
         // Load scripts and styles.
         wp_enqueue_style( $this->base->plugin_slug . '-style' );
+        wp_enqueue_style( $this->base->plugin_slug . '-lazyload' );
         wp_enqueue_style( $this->base->plugin_slug . '-fancybox' );
         wp_enqueue_style( $this->base->plugin_slug . '-jgallery' );
         wp_enqueue_script( $this->base->plugin_slug . '-script' );
+        // If lazy load is active, load the lazy load script
+        if ( $this->get_config( 'lazy_loading', $data ) == 1 ) {
+            wp_localize_script( $this->base->plugin_slug . '-script', 'envira_lazy_load', 'true');
+            wp_localize_script( $this->base->plugin_slug . '-script', 'envira_lazy_load_initial', 'false');
+            wp_localize_script( $this->base->plugin_slug . '-script', 'envira_lazy_load_delay', (string) $lazy_loading_delay);
+        }
 
         // Load custom gallery themes if necessary.
         if ( 'base' !== $this->get_config( 'gallery_theme', $this->gallery_data ) && $this->get_config( 'columns', $this->gallery_data ) > 0 ) {
@@ -298,6 +308,7 @@ class Envira_Gallery_Shortcode {
         // These calls will generate thumbnails as necessary for us.
         $imagesrc = $this->get_image_src( $id, $item, $data );
         $image_src_retina = $this->get_image_src( $id, $item, $data, false, true );
+        $placeholder = wp_get_attachment_image_src( $id, 'medium' ); // $placeholder is null because $id is 0 for instagram?
 
         // Filter output before starting this gallery item.
         $gallery  = apply_filters( 'envira_gallery_output_before_item', $gallery, $id, $item, $data, $i );
@@ -372,7 +383,82 @@ class Envira_Gallery_Shortcode {
                 $gallery_theme = $this->get_config( 'columns', $data ) == 0 ? ' envira-' . $this->get_config( 'justified_gallery_theme', $data ) : '';
 
                 // Build the image and allow filtering
-                $output_item = '<img id="envira-gallery-image-' . sanitize_html_class( $id ) . '" class="envira-gallery-image envira-gallery-image-' . $i . $gallery_theme . '" data-envira-index="' . $i . '" src="' . esc_url( $imagesrc ) . '"' . ( $this->get_config( 'dimensions', $data ) ? ' width="' . $this->get_config( 'crop_width', $data ) . '" height="' . $this->get_config( 'crop_height', $data ) . '"' : '' ) . ' data-envira-src="' . esc_url( $imagesrc ) . '" data-envira-gallery-id="' . $data['id'] . '" data-envira-item-id="' . $id . '" data-envira-caption="' . $caption . '" alt="' . esc_attr( $item['alt'] ) . '" title="' . strip_tags( html_entity_decode( $item['title'] ) ) . '" ' . apply_filters( 'envira_gallery_output_image_attr', '', $id, $item, $data, $i ) . ' itemprop="thumbnailUrl" srcset="' . esc_url( $image_src_retina ) . ' 2x" />';
+                // $output_item = '<img id="envira-gallery-image-' . sanitize_html_class( $id ) . '" class="envira-gallery-image envira-gallery-image-' . $i . $gallery_theme . '" data-envira-index="' . $i . '" src="' . esc_url( $imagesrc ) . '"' . ( $this->get_config( 'dimensions', $data ) ? ' width="' . $this->get_config( 'crop_width', $data ) . '" height="' . $this->get_config( 'crop_height', $data ) . '"' : '' ) . ' data-envira-src="' . esc_url( $imagesrc ) . '" data-envira-gallery-id="' . $data['id'] . '" data-envira-item-id="' . $id . '" data-envira-caption="' . $caption . '" alt="' . esc_attr( $item['alt'] ) . '" title="' . strip_tags( html_entity_decode( $item['title'] ) ) . '" ' . apply_filters( 'envira_gallery_output_image_attr', '', $id, $item, $data, $i ) . ' itemprop="thumbnailUrl" srcset="' . esc_url( $image_src_retina ) . ' 2x" />';
+
+
+        // Build the image and allow filtering
+        // Update: how we build the html depends on the lazy load script
+
+        // Check if user has lazy loading on - if so, we add the css class
+
+        $envira_lazy_load = $this->get_config( 'lazy_loading', $data ) == 1 ? 'envira-lazy' : '';
+
+        // Determine/confirm the width/height of the image
+        // $placeholder should hold it but not for instagram 
+
+        if ( $this->get_config( 'crop', $data ) ) {
+            $output_src = $imagesrc;
+        } else if ( !empty( $placeholder[0] ) ) {
+            $output_src = $placeholder[0];
+        } else if ( !empty( $item['width'] ) ) {
+            $output_src = $item['src'];
+        } else {
+            $output_src = false;
+        }
+
+        if ( $this->get_config( 'crop', $data ) && $this->get_config( 'crop_width', $data ) ) {
+            $output_width = $this->get_config( 'crop_width', $data );
+        } else if ( !empty( $placeholder[1] ) ) {
+            $output_width = $placeholder[1];
+        } else if ( !empty( $item['width'] ) ) {
+            $output_width = $item['width'];
+        } else {
+            $output_width = false;
+        }
+
+        if ( $this->get_config( 'crop', $data ) && $this->get_config( 'crop_height', $data ) ) {
+            $output_height = $this->get_config( 'crop_height', $data );
+        } else if ( !empty( $placeholder[2] ) ) {
+            $output_height = $placeholder[2];
+        } else if ( !empty( $item['height'] ) ) {
+            $output_height = $item['height'];
+        } else {
+            $output_height = false;
+        }
+
+        if ( $this->get_config( 'columns', $data ) == 0 ) {
+
+            // Automatic
+            
+            //$output_item = '<img id="envira-gallery-image-' . sanitize_html_class( $id ) . '" class="envira-gallery-image envira-gallery-image-' . $i . $gallery_theme . '" data-envira-index="' . $i . '" src="' . esc_url( $imagesrc ) . '"' . ( $this->get_config( 'dimensions', $data ) ? ' width="' . $this->get_config( 'crop_width', $data ) . '" height="' . $this->get_config( 'crop_height', $data ) . '"' : '' ) . ' data-envira-src="' . esc_url( $imagesrc ) . '" data-envira-gallery-id="' . $data['id'] . '" data-envira-item-id="' . $id . '" data-envira-caption="' . $caption . '" alt="' . esc_attr( $item['alt'] ) . '" title="' . strip_tags( html_entity_decode( $item['title'] ) ) . '" ' . apply_filters( 'envira_gallery_output_image_attr', '', $id, $item, $data, $i ) . ' itemprop="thumbnailUrl" srcset="' . esc_url( $image_src_retina ) . ' 2x" />';
+
+            $output_item = '<img id="envira-gallery-image-' . sanitize_html_class( $id ) . '" class="envira-gallery-image envira-gallery-image-' . $i . $gallery_theme . ' '.$envira_lazy_load.'" data-envira-index="' . $i . '" src="' . esc_url( $output_src ) . '"' . ( $this->get_config( 'dimensions', $data ) ? ' width="' . $this->get_config( 'crop_width', $data ) . '" height="' . $this->get_config( 'crop_height', $data ) . '"' : '' ) . ' data-envira-src="' . esc_url( $output_src ) . '" data-envira-gallery-id="' . $data['id'] . '" data-envira-item-id="' . $id . '" data-envira-caption="' . $caption . '" alt="' . esc_attr( $item['alt'] ) . '" title="' . strip_tags( esc_attr( $item['title'] ) ) . '" ' . apply_filters( 'envira_gallery_output_image_attr', '', $id, $item, $data, $i ) . ' itemprop="thumbnailUrl" data-envira-srcset="' . esc_url( $output_src ) . ' 400w,' . esc_url( $output_src ) . ' 2x" data-envira-width="'.$output_width.'" data-envira-height="'.$output_height.'" srcset="' . ( ( $envira_lazy_load ) ? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==' : esc_url( $image_src_retina ) . ' 2x' ) . '" data-safe-src="'. ( ( $envira_lazy_load ) ? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==' : esc_url( $output_src ) ) . '" />';                   
+
+        } else {
+
+            // Legacy
+            
+            $output_item = false;
+
+            if ( $envira_lazy_load ) {
+
+                $padding_bottom = ( $output_height / $output_width ) * 100;
+                // $padding_bottom = 100;
+                $output_item .= '<div class="envira-lazy" data-test-width="'.$output_width.'" data-test-height="'.$output_height.'" style="padding-bottom:'.$padding_bottom.'%;">';
+
+            }
+
+            $output_item .= '<img id="envira-gallery-image-' . sanitize_html_class( $id ) . '" class="envira-gallery-image envira-gallery-image-' . $i . $gallery_theme . '" data-envira-index="' . $i . '" src="' . esc_url( $output_src ) . '"' . ( $this->get_config( 'dimensions', $data ) ? ' width="' . $this->get_config( 'crop_width', $data ) . '" height="' . $this->get_config( 'crop_height', $data ) . '"' : '' ) . ' data-envira-src="' . esc_url( $output_src ) . '" data-envira-gallery-id="' . $data['id'] . '" data-envira-item-id="' . $id . '" data-envira-caption="' . $caption . '" alt="' . esc_attr( $item['alt'] ) . '" title="' . strip_tags( esc_attr( $item['title'] ) ) . '" ' . apply_filters( 'envira_gallery_output_image_attr', '', $id, $item, $data, $i ) . ' itemprop="thumbnailUrl" data-envira-srcset="' . esc_url( $output_src ) . ' 400w,' . esc_url( $output_src ) . ' 2x" srcset="' . ( ( $envira_lazy_load ) ? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==' : esc_url( $image_src_retina ) . ' 2x' ) . '" />';
+
+            if ( $envira_lazy_load ) {
+
+                $output_item .= '</div>';
+
+            }
+
+        }
+
+
                 $output_item = apply_filters( 'envira_gallery_output_image', $output_item, $id, $item, $data, $i );
 
                 // Add image to output
@@ -683,6 +769,20 @@ class Envira_Gallery_Shortcode {
                     ?>
                     var envira_container_<?php echo $data['id']; ?> = '';
 
+                function envira_album_lazy_load_image( $id ) {
+
+                    <?php if ( $this->get_config( 'lazy_loading', $data ) ) { ?>
+                    
+                    /* console.log ('load_images for ' + $id);
+                    // responsivelyLazy.setGalleryClass('#envira-gallery-<?php echo $data['id']; ?>'); */
+                    responsivelyLazy.run('#envira-gallery-'+ $id);
+
+                    <?php } else { ?>
+                        console.log ('load_images was pinged, but lazy load turned off');
+                    <?php } ?>
+
+                }
+
                     <?php if ( $this->get_config( 'columns', $data ) == 0 ) : ?>
 
                     <?php
@@ -698,8 +798,30 @@ class Envira_Gallery_Shortcode {
                         $('#envira-gallery-<?php echo $data["id"]; ?>').enviraJustifiedGallery({
                             rowHeight : <?php echo $justified_row_height; ?>,
                             maxRowHeight: -1,
+                            waitThumbnailsLoad: true,
                             selector: '> div > div',
-                            lastRow: 'nojustify'
+                            lastRow: 'nojustify',
+                            border: 0,
+                        });
+
+                        $('#envira-gallery-<?php echo $data["id"]; ?>').justifiedGallery().on('jg.complete', function (e) {
+                        
+                            envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                            $(window).scroll(function(event){
+                                envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                            });
+
+                        });
+
+                        $( document ).on( "envira_pagination_ajax_load_completed", function() {
+                            $('#envira-gallery-<?php echo $data["id"]; ?>').justifiedGallery().on('jg.complete', function (e) {
+                            
+                                envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                                $(window).scroll(function(event){
+                                    envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                                });
+
+                            });
                         });
 
                         <?php if ( $gallery_theme == 'js-desaturate' || $gallery_theme == 'js-threshold' || $gallery_theme == 'js-blur' || $gallery_theme == 'js-vintage' ) : ?>
@@ -790,6 +912,29 @@ class Envira_Gallery_Shortcode {
                         ?>
                         envira_isotopes['<?php echo $data['id']; ?>'] = envira_container_<?php echo $data['id']; ?>
                                                                     = $('#envira-gallery-<?php echo $data['id']; ?>').enviratope(envira_isotopes_config['<?php echo $data['id']; ?>']);
+                        
+                        $('#envira-gallery-<?php echo $data["id"]; ?>').on( 'layoutComplete',
+                          function( event, laidOutItems ) {
+                            /* console.log( 'Isotope layout completed on ' + laidOutItems.length + ' items' ); */
+                            envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                            $(window).scroll(function(event){
+                                envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                            });
+                          }
+                        );
+
+                        $( document ).on( "envira_pagination_ajax_load_completed", function() {
+                            $('#envira-gallery-<?php echo $data["id"]; ?>').on( 'layoutComplete',
+                              function( event, laidOutItems ) {
+                                /* console.log( 'Isotope layout completed on ' + laidOutItems.length + ' items' ); */
+                                envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                                $(window).scroll(function(event){
+                                    envira_album_lazy_load_image(<?php echo $data['id']; ?>);
+                                });
+                              }
+                            );
+                        });
+                    
                         <?php
                         // Re-layout Isotope when each image loads
                         ?>
@@ -1301,6 +1446,11 @@ class Envira_Gallery_Shortcode {
         $classes[] = 'envira-gallery-item';
         $classes[] = 'enviratope-item';
         $classes[] = 'envira-gallery-item-' . $i;
+
+        // If lazy load exists, add that
+        if ( isset( $data['config']['lazy_loading'] ) && $data['config']['lazy_loading'] ) {
+            $classes[] = 'envira-lazy-load';
+        }       
 
         // Allow filtering of classes and then return what's left.
         $classes = apply_filters( 'envira_gallery_output_item_classes', $classes, $item, $i, $data );

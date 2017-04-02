@@ -759,6 +759,46 @@ class Envira_Gallery_Metaboxes {
                             <p class="description"><?php _e( 'Determines the number of columns in the gallery. Automatic will attempt to fill each row as much as possible before moving on to the next row.', 'envira-gallery' ); ?></p>
                         </td>
                     </tr>
+
+                    <?php
+
+                    if ( !isset( $post ) || $post->post_status == 'auto-draft' ) {
+                        // make the lazy loading checkbox "checked", otherwise if this is a previous post don't force it
+
+                    ?>
+                    <tr id="envira-config-lazy-loading-box">
+                        <th scope="row">
+                            <label for="envira-config-lazy-loading"><?php _e( 'Enable Lazy Loading?', 'envira-gallery' ); ?></label>
+                        </th>
+                        <td>
+                            <input id="envira-config-lazy-loading" type="checkbox" name="_envira_gallery[lazy_loading]" value="<?php echo $this->get_config( 'lazy_loading', $this->get_config_default( 'lazy_loading' ) ); ?>" <?php checked( $this->get_config( 'lazy_loading', $this->get_config_default( 'lazy_loading' ) ), 1 ); ?> />
+                            <span class="description"><?php _e( 'Enables or disables lazy loading, which helps with performance by loading thumbnails only when they are visible. See our documentation for more information.', 'envira-gallery' ); ?></span>
+                        </td>
+                    </tr>
+
+                    <?php } else { ?>
+
+                    <tr id="envira-config-lazy-loading-box">
+                        <th scope="row">
+                            <label for="envira-config-lazy-loading"><?php _e( 'Enable Lazy Loading?', 'envira-gallery' ); ?></label>
+                        </th>
+                        <td>
+                            <input id="envira-config-lazy-loading" type="checkbox" name="_envira_gallery[lazy_loading]" value="<?php echo $this->get_config( 'lazy_loading', $this->get_config_default( 'lazy_loading' ) ); ?>" <?php checked( $this->get_config( 'lazy_loading' ), 1 ); ?> />
+                            <span class="description"><?php _e( 'Enables or disables lazy loading, which helps with performance by loading thumbnails only when they are visible. See our documentation for more information.', 'envira-gallery' ); ?></span>
+                        </td>
+                    </tr>
+
+                    <?php } ?>
+
+                    <tr id="envira-config-lazy-loading-delay">
+                        <th scope="row">
+                            <label for="envira-config-lazy-loading-delay"><?php _e( 'Lazy Loading Delay', 'envira-gallery' ); ?></label>
+                        </th>
+                            <td>
+                                <input id="envira-config-lazy-loading-delay" type="number" name="_envira_gallery[lazy_loading_delay]" value="<?php echo $this->get_config( 'lazy_loading_delay', $this->get_config_default( 'lazy_loading_delay' ) ); ?>" /> <span class="envira-unit"><?php _e( 'milliseconds', 'envira-gallery' ); ?></span>
+                                <p class="description"><?php _e( 'Set a delay when new images are loaded', 'envira-gallery' ); ?></p>
+                            </td>
+                    </tr>
                 </tbody>
             </table>
             <?php // New Automatic Layout / Justified Layout Options ?>
@@ -1301,6 +1341,8 @@ class Envira_Gallery_Metaboxes {
         $settings['config']['crop_width']          = absint( $_POST['_envira_gallery']['crop_width'] );
         $settings['config']['crop_height']         = absint( $_POST['_envira_gallery']['crop_height'] );
         $settings['config']['crop']                = isset( $_POST['_envira_gallery']['crop'] ) ? 1 : 0;
+        $settings['config']['lazy_loading']        = isset( $_POST['_envira_gallery']['lazy_loading'] ) ? 1 : 0;
+        $settings['config']['lazy_loading_delay']  = absint( $_POST['_envira_gallery']['lazy_loading_delay'] );
 
         // Automatic/Justified
         $settings['config']['justified_row_height'] = isset( $_POST['_envira_gallery']['justified_row_height'] ) ? absint($_POST['_envira_gallery']['justified_row_height'] ) : 150;
